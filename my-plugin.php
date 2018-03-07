@@ -57,8 +57,7 @@ function replace_content($content_obj)
 
 	if (!array_key_exists('coblo-id', $_COOKIE))
 	{
-		$text = '<h2>You should not delete your id Cookie</h2>';
-		return $text;
+		return "<script>location.reload();</script><h2>Please reload this page.</h2>";
 	}
 	$cookie = $_COOKIE['coblo-id'];
 	$postid = get_the_ID();

@@ -1,7 +1,5 @@
 "use strict";
 
-console.log("script was loaded");
-
 function check_paid() {
 	var data = {
 		'action': 'check_paid'

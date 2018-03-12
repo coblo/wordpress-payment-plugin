@@ -15,6 +15,7 @@ global $jal_db_version;
 $jal_db_version = '1.0';
 
 add_action('wp_ajax_check_paid', 'check_paid');
+add_action('wp_ajax_nopriv_check_paid', 'check_paid');
 add_filter('the_content', 'replace_content');
 add_action('init', 'set_cookie');
 register_activation_hook(__FILE__, 'jal_install');
@@ -25,14 +26,17 @@ function check_paid()
 	$tablename = $wpdb->prefix . 'articlepayments';
 
 	$cookie = $_COOKIE['coblo-id'];
-	$postid = url_to_postid(wp_get_referer());
+	$postids = $_POST["coblo_post_ids"];
 
-	$addresses = $wpdb->get_col('
+	$addresses = array();
+	foreach ($postids as $postid) {
+		$addresses = array_merge($addresses, $wpdb->get_col('
 		SELECT address
 		FROM ' . esc_sql($tablename) . '
 		WHERE cookie = "' . esc_sql($cookie) . '"
 		  AND postid = ' . esc_sql($postid)
-	);
+		));
+	}
 
 	if (!$addresses)
 		die(json_encode(array("is_paid" => false, "has_error" => true)));
@@ -61,6 +65,10 @@ function replace_content($content_obj)
 	}
 	$cookie = $_COOKIE['coblo-id'];
 	$postid = get_the_ID();
+	if (is_home()) {
+		$page_for_posts = get_option('page_for_posts');
+		$postid =  get_post($page_for_posts)->ID;
+	}
 
 	$addresses = $wpdb->get_col('
 		SELECT address
@@ -81,6 +89,8 @@ function replace_content($content_obj)
 					<p>There was an error! Please try again in some minutes.</p>
 					<script>window.coblo_payment_check_url=' . json_encode(admin_url('admin-ajax.php')) . ';</script>
 					<script>window.coblo_node_has_error=true;</script>
+					<script>if (!window.coblo_post_ids) {window.coblo_post_ids=[];}</script>
+					<script>window.coblo_post_ids.push(' . $postid . ');</script>
 				';
 				wp_enqueue_script("checking_payments", plugins_url('/scripts/checking_payments.js', __FILE__), array('jquery'));
 				return $text;
@@ -113,6 +123,8 @@ function replace_content($content_obj)
 				<p>There was an error! Please try again in some minutes.</p>
 				<script>window.coblo_payment_check_url=' . json_encode(admin_url('admin-ajax.php')) . ';</script>
 				<script>window.coblo_node_has_error=true;</script>
+				<script>if (!window.coblo_post_ids) {window.coblo_post_ids=[];}</script>
+				<script>window.coblo_post_ids.push(' . $postid . ');</script>
 			';
 			wp_enqueue_script("checking_payments", plugins_url('/scripts/checking_payments.js', __FILE__), array('jquery'));
 			return $text;
@@ -124,6 +136,8 @@ function replace_content($content_obj)
 		<p>Please send " . get_option('coblo_amount') . " to " . $address . '.</p>
 		<script>window.coblo_payment_check_url=' . json_encode(admin_url('admin-ajax.php')) . ';</script>
 		<script>window.coblo_node_has_error=false;</script>
+		<script>if (!window.coblo_post_ids) {window.coblo_post_ids=[];}</script>
+		<script>window.coblo_post_ids.push(' . $postid . ');</script>
 	';
 	wp_enqueue_script("checking_payments", plugins_url('/scripts/checking_payments.js', __FILE__), array('jquery'));
 

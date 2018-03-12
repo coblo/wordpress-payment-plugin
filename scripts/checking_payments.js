@@ -2,7 +2,8 @@
 
 function check_paid() {
 	var data = {
-		'action': 'check_paid'
+		'action': 'check_paid',
+		'coblo_post_ids': window.coblo_post_ids
 	};
 
 	jQuery.post(

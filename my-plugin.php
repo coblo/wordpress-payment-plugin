@@ -84,14 +84,7 @@ function replace_content($content_obj)
 			$article_paid = article_is_paid($address);
 			if ($article_paid["has_error"])
 			{
-				$text = '
-					<h2>Technical Problems</h2>
-					<p>There was an error! Please try again in some minutes.</p>
-					<script>window.coblo_payment_check_url=' . json_encode(admin_url('admin-ajax.php')) . ';</script>
-					<script>window.coblo_node_has_error=true;</script>
-					<script>if (!window.coblo_post_ids) {window.coblo_post_ids=[];}</script>
-					<script>window.coblo_post_ids.push(' . $postid . ');</script>
-				';
+				$text = get_text(true, $postid, null);
 				wp_enqueue_script("checking_payments", plugins_url('/scripts/checking_payments.js', __FILE__), array('jquery'));
 				return $text;
 			} else if ($article_paid["is_paid"])
@@ -118,29 +111,38 @@ function replace_content($content_obj)
 			);
 		} else
 		{
-			$text = '
-				<h2>Technical Problems</h2>
-				<p>There was an error! Please try again in some minutes.</p>
-				<script>window.coblo_payment_check_url=' . json_encode(admin_url('admin-ajax.php')) . ';</script>
-				<script>window.coblo_node_has_error=true;</script>
-				<script>if (!window.coblo_post_ids) {window.coblo_post_ids=[];}</script>
-				<script>window.coblo_post_ids.push(' . $postid . ');</script>
-			';
+			$text = get_text(true, $postid, null);
 			wp_enqueue_script("checking_payments", plugins_url('/scripts/checking_payments.js', __FILE__), array('jquery'));
 			return $text;
 		}
 	}
 
-	$text = "
-		<h2>You have to pay to read this article</h2>
-		<p>Please send " . get_option('coblo_amount') . " to " . $address . '.</p>
+	$text = get_text(false, $postid, $address);
+	wp_enqueue_script("checking_payments", plugins_url('/scripts/checking_payments.js', __FILE__), array('jquery'));
+
+	return $text;
+}
+
+function get_text($technical_problems, $postid=null, $address=null) {
+	$text = "";
+	if ($technical_problems)
+	{
+		$text .= "
+			<h2>Technical Problems</h2>
+			<p>There was an error! Please try again in some minutes.</p>
+		";
+	} else {
+		$text .= '
+			<h2>You have to pay to read this article</h2>
+			<p>Please send ' . get_option('coblo_amount') . " to " . $address . '.</p>
+		';
+	}
+	$text .= '
 		<script>window.coblo_payment_check_url=' . json_encode(admin_url('admin-ajax.php')) . ';</script>
-		<script>window.coblo_node_has_error=false;</script>
+		<script>window.coblo_node_has_error=' . ($technical_problems ? 'true' : 'false') . ';</script>
 		<script>if (!window.coblo_post_ids) {window.coblo_post_ids=[];}</script>
 		<script>window.coblo_post_ids.push(' . $postid . ');</script>
 	';
-	wp_enqueue_script("checking_payments", plugins_url('/scripts/checking_payments.js', __FILE__), array('jquery'));
-
 	return $text;
 }
 

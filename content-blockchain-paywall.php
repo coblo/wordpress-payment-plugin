@@ -14,10 +14,11 @@ require 'coblo-options.php';
 global $jal_db_version;
 $jal_db_version = '1.0';
 
+add_action('wp_ajax_coblo_set_cookies', 'set_cookies');
+add_action('wp_ajax_nopriv_coblo_set_cookies', 'set_cookies');
 add_action('wp_ajax_check_paid', 'check_paid');
 add_action('wp_ajax_nopriv_check_paid', 'check_paid');
 add_filter('the_content', 'replace_content');
-add_action('init', 'set_cookie');
 register_activation_hook(__FILE__, 'jal_install');
 
 function check_paid()
@@ -25,11 +26,11 @@ function check_paid()
 	global $wpdb;
 	$tablename = $wpdb->prefix . 'articlepayments';
 
-	$cookie = $_COOKIE['coblo-id'];
 	$postids = $_POST["coblo_post_ids"];
 
 	$addresses = array();
 	foreach ($postids as $postid) {
+		$cookie = $_COOKIE['coblo-id-' . $postid];
 		$addresses = array_merge($addresses, $wpdb->get_col('
 		SELECT address
 		FROM ' . esc_sql($tablename) . '
@@ -56,19 +57,29 @@ function check_paid()
 
 function replace_content($content_obj)
 {
+	wp_register_style("paywall-styles", plugins_url('/styles/coblo.css', __FILE__));
+	wp_enqueue_style("paywall-styles");
 	global $wpdb;
 	$tablename = $wpdb->prefix . 'articlepayments';
-
-	if (!array_key_exists('coblo-id', $_COOKIE))
-	{
-		return "<script>location.reload();</script><h2>Please reload this page.</h2>";
-	}
-	$cookie = $_COOKIE['coblo-id'];
 	$postid = get_the_ID();
 	if (is_home()) {
 		$page_for_posts = get_option('page_for_posts');
-		$postid =  get_post($page_for_posts)->ID;
+		$postid = get_post($page_for_posts)->ID;
 	}
+
+	if (!array_key_exists('coblo-id-' . $postid, $_COOKIE))
+	{
+		wp_enqueue_script("add_cookies", plugins_url('/scripts/add_cookies.js', __FILE__), array('jquery'));
+		$text = '
+			<h3>Page will reload. Please wait some seconds.</h3>
+			<script>window.coblo_payment_check_url=' . json_encode(admin_url('admin-ajax.php')) . ';</script>
+			<script>if (!window.coblo_posts_need_cookie) {window.coblo_posts_need_cookie=[];}</script>
+			<script>window.coblo_posts_need_cookie.push(' . $postid . ');</script>
+		';
+		return $text;
+	}
+
+	$cookie = $_COOKIE['coblo-id-' . $postid];
 
 	$addresses = $wpdb->get_col('
 		SELECT address
@@ -125,16 +136,21 @@ function replace_content($content_obj)
 
 function get_text($technical_problems, $postid=null, $address=null) {
 	$text = "";
+	if ($postid && strpos(get_post($postid)->post_content,'<!--more-->')) {
+		$text .= explode('<!--more-->', get_post($postid)->post_content)[0];
+		$text .= " ...";
+	}
+	$text .= "<div class='content-blockchain-post'>";
 	if ($technical_problems)
 	{
 		$text .= "
-			<h2>Technical Problems</h2>
+			<h3>Technical Problems</h3>
 			<p>There was an error! Please try again in some minutes.</p>
 		";
 	} else {
 		$text .= '
-			<h2>You have to pay to read this article</h2>
-			<p>Please send ' . get_option('coblo_amount') . " to " . $address . '.</p>
+			<h3>You have to pay to read this article</h3>
+			<p>Please send ' . get_option('coblo_amount') . " CHM to " . $address . '</p>
 		';
 	}
 	$text .= '
@@ -142,7 +158,7 @@ function get_text($technical_problems, $postid=null, $address=null) {
 		<script>window.coblo_node_has_error=' . ($technical_problems ? 'true' : 'false') . ';</script>
 		<script>if (!window.coblo_post_ids) {window.coblo_post_ids=[];}</script>
 		<script>window.coblo_post_ids.push(' . $postid . ');</script>
-	';
+	</div>';
 	return $text;
 }
 
@@ -150,7 +166,7 @@ function article_is_paid($address)
 {
 	$has_error = false;
 	$is_paid = false;
-	$postfields = array("jsonrpc" => "1.0", "id" => "curltest", "method" => "listaddresstransactions", "params" => [$address, 100000]);
+	$postfields = array("jsonrpc" => "1.0", "id" => "curltest", "method" => "listaddresstransactions", "params" => [$address, 1000000]);
 
 	$answer = curl_post('http://' . get_option('coblo_host') . ':' . get_option('coblo_port'), json_encode($postfields), array(
 		'username' => get_option('coblo_user'),
@@ -188,12 +204,14 @@ function create_address()
 	return json_decode($answer)->result;
 }
 
-function set_cookie()
+function set_cookies()
 {
-	if (!array_key_exists('coblo-id', $_COOKIE))
-	{
-		$cookie = randomName(32);
-		setcookie('coblo-id', $cookie, time() + 60 * 60 * 24 * 30, "/", "");
+	foreach ($_POST['coblo_posts_need_cookie'] as $postid) {
+		if (!array_key_exists('coblo-id-' . $postid, $_COOKIE))
+		{
+			$cookie = randomName(32);
+			setcookie('coblo-id-' . $postid, $cookie, time() + 60 * 60 * 24 * 30, "/", "");
+		}
 	}
 }
 

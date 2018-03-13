@@ -1,15 +1,15 @@
 <?php
 /*
-Plugin Name: Test Plugin
-Plugin URI: content-blockchain.com
-Description: First test plugin
+Plugin Name: Content Blockchain Paywall
+Plugin URI: content-blockchain.org
+Description: Adds a paywall to all posts. Users will have to pay on the content blockchain to read your articles.
 Version: 1.0
 Author: Patricia Schinke
-Author URI: content-blockchain.com
-License: GPLv2
+Author URI: content-blockchain.org
+License: GPLv3
 */
 
-require 'my-options.php';
+require 'coblo-options.php';
 
 global $jal_db_version;
 $jal_db_version = '1.0';
@@ -89,7 +89,7 @@ function replace_content($content_obj)
 				return $text;
 			} else if ($article_paid["is_paid"])
 			{
-				$cookie_link = plugins_url('/set-cookie.php?cookie=' . $cookie, __FILE__);
+				$cookie_link = plugins_url('/coblo-set-cookie.php?cookie=' . $cookie, __FILE__);
 				$cookie_text = '<p>Save this link:<br><a href="' . $cookie_link . '">' . $cookie_link . '</a>';
 				$cookie_text .= '<br>So you can get your identifier cookie back if you loose it.</p>';
 				return $cookie_text . $content_obj;

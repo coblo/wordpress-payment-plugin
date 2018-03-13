@@ -1,0 +1,9 @@
+div.content-blockchain-post {
+	background: #FFF3B2;
+	padding: 1rem;
+	border-radius: 1rem;
+}
+
+div.content-blockchain-post p {
+	margin-bottom: 0;
+}

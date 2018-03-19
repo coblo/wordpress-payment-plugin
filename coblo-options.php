@@ -35,11 +35,13 @@ function test_connection()
 function register_coblo_settings()
 {
 	//register our settings
-	register_setting('my-plugin-settings-group', 'coblo_host');
-	register_setting('my-plugin-settings-group', 'coblo_port');
-	register_setting('my-plugin-settings-group', 'coblo_user');
-	register_setting('my-plugin-settings-group', 'coblo_password');
-	register_setting('my-plugin-settings-group', 'coblo_amount');
+	register_setting('coblo-settings-group', 'coblo_host');
+	register_setting('coblo-settings-group', 'coblo_port');
+	register_setting('coblo-settings-group', 'coblo_user');
+	register_setting('coblo-settings-group', 'coblo_password');
+	register_setting('coblo-settings-group', 'coblo_amount');
+	register_setting('coblo-settings-group', 'coblo_paywall_color');
+	register_setting('coblo-settings-group', 'coblo_paywall_header');
 }
 
 function coblo_settings_page()
@@ -56,8 +58,8 @@ function coblo_settings_page()
 			running.</p>
 
 		<form method="post" action="options.php">
-			<?php settings_fields('my-plugin-settings-group'); ?>
-			<?php do_settings_sections('my-plugin-settings-group'); ?>
+			<?php settings_fields('coblo-settings-group'); ?>
+			<?php do_settings_sections('coblo-settings-group'); ?>
 			<table class="form-table">
 				<tr valign="top">
 					<th scope="row" style="padding: 15px 10px 15px 0; width: 150px;"><label for="coblo_host">RPC Host</label></th>
@@ -101,17 +103,31 @@ function coblo_settings_page()
 						<p id="coblo-connection-info" style="font-weight: 600; width: 300px; text-align: right;"></p>
 					</td>
 				</tr>
-				<tr>
-					<th style="width: 100px; padding: 0; white-space: nowrap;">
-						<h2 style="margin-bottom: 0;">Amount:</h2>
-						<p style="font-weight: 400;">Amount for one of your articles.</p>
-					</th>
-				</tr>
 				<tr valign="top">
-					<th scope="row" style="padding: 15px 10px 15px 0; width: 150px;"><label for="coblo_amount">Amount</label></th>
+					<th scope="row" style="padding: 15px 10px 15px 0; width: 150px;"><label for="coblo_amount">Amount</label>
+						<p style="font-weight: 400;">Amount for one of your articles.</p></th>
 					<td style="padding: 10px 10px;">
 						<input type="number" id="coblo_amount" name="coblo_amount"
 						       value="<?php echo esc_attr(get_option('coblo_amount')); ?>"
+						       style="width: 300px;"/>
+					</td>
+				</tr>
+				<tr valign="top">
+					<th scope="row" style="padding: 15px 10px 15px 0; width: 150px;"><label for="coblo_paywall_color">Paywall
+							color</label></th>
+					<td style="padding: 10px 10px;">
+						<input type="text" id="coblo_paywall_color" name="coblo_paywall_color" placeholder="#FFF3B2"
+						       value="<?php echo esc_attr(get_option('coblo_paywall_color')); ?>"
+						       style="width: 300px;"/>
+					</td>
+				</tr>
+				<tr valign="top">
+					<th scope="row" style="padding: 15px 10px 15px 0; width: 150px;"><label for="coblo_paywall_header">Paywall
+							Header</label></th>
+					<td style="padding: 10px 10px;">
+						<input type="text" id="coblo_paywall_header" name="coblo_paywall_header"
+						       placeholder="Thank you for the interest in our article"
+						       value="<?php echo esc_attr(get_option('coblo_paywall_header')); ?>"
 						       style="width: 300px;"/>
 					</td>
 				</tr>
@@ -147,9 +163,42 @@ function coblo_settings_page()
 						'json'
 					);
 				};
+				var paywall_color_input = document.getElementById("coblo_paywall_color");
+				var paywall_header_input = document.getElementById("coblo_paywall_header");
+				var coblo_amount_input = document.getElementById("coblo_amount");
+				paywall_color_input.addEventListener("input", function () {
+					var paywall_preview = document.getElementById("coblo-preview");
+					if (paywall_color_input.value === '')
+						paywall_preview.style.background = '#FFF3B2';
+					else
+						paywall_preview.style.background = paywall_color_input.value;
+				});
+				paywall_header_input.addEventListener("input", function () {
+					var paywall_preview_header = document.getElementById('coblo-preview-header');
+					if (paywall_header_input.value === '')
+						paywall_preview_header.innerHTML = "Thank you for the interest in our article";
+					else
+						paywall_preview_header.innerHTML = paywall_header_input.value;
+				});
+				coblo_amount_input.addEventListener("input", function () {
+					var paywall_preview_header = document.getElementById('coblo-preview-amount');
+					paywall_preview_header.innerHTML = coblo_amount_input.value;
+				});
 			</script>
 
 			<?php submit_button(); ?>
+
+			<h3>Paywall Preview:</h3>
+			<div id="coblo-preview"
+			     style="background: <?php echo(esc_attr(get_option('coblo_paywall_color')) ?: '#FFF3B2'); ?>;
+				     padding: 1rem; border-radius: 1rem; width: fit-content;">
+				<h3 style="font-size: 22px; margin-top: 0;" id="coblo-preview-header">
+					<?php echo(esc_attr(get_option('coblo_paywall_header')) ?: "Thank you for the interest in our article"); ?>
+				</h3>
+				<p style="font-size: 16px; margin-bottom: 0">Please
+					send <span id="coblo-preview-amount"><?php echo(esc_attr(get_option('coblo_amount')) ?: "1"); ?></span> CHM to
+					-address-</p>
+			</div>
 
 		</form>
 	</div>

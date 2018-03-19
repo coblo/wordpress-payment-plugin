@@ -105,7 +105,7 @@ function replace_content($content_obj)
 			{
 				$cookie_link = home_url() . '?coblo_post_id=' . $postid . '&coblo_cookie=' . $cookie;
 				$cookie_text = '<p>Save this link:<br><a href="' . $cookie_link . '">' . $cookie_link . '</a>';
-				$cookie_text .= '<br>So you can get your identifier cookie back if you loose it.</p>';
+				$cookie_text .= '<br>So you can read this article from other devices.</p>';
 				return $cookie_text . $content_obj;
 			}
 		}
@@ -145,7 +145,7 @@ function get_text($technical_problems, $postid = null, $address = null)
 		$text .= explode('<!--more-->', get_post($postid)->post_content)[0];
 		$text .= " ...";
 	}
-	$text .= "<div class='content-blockchain-post'>";
+	$text .= "<div class='content-blockchain-post' style='background: " . get_option('coblo_paywall_color') . ";'>";
 	if ($technical_problems)
 	{
 		$text .= "
@@ -154,10 +154,8 @@ function get_text($technical_problems, $postid = null, $address = null)
 		";
 	} else
 	{
-		$text .= '
-			<h3>You have to pay to read this article</h3>
-			<p>Please send ' . get_option('coblo_amount') . " CHM to " . $address . '</p>
-		';
+		$text .= '<h3>' . (get_option('coblo_paywall_header') ?: 'Thank you for the interest in our article') . '</h3>';
+		$text .= '<p>Please send ' . get_option('coblo_amount') . " CHM to " . $address . '</p>';
 	}
 	$text .= '
 		<script>window.coblo_payment_check_url=' . json_encode(admin_url('admin-ajax.php')) . ';</script>

@@ -19,6 +19,7 @@ add_action('wp_ajax_nopriv_coblo_set_cookies', 'set_cookies');
 add_action('wp_ajax_check_paid', 'check_paid');
 add_action('wp_ajax_nopriv_check_paid', 'check_paid');
 add_filter('the_content', 'replace_content');
+add_action('init', 'get_cookie_back');
 register_activation_hook(__FILE__, 'jal_install');
 
 function check_paid()
@@ -29,7 +30,8 @@ function check_paid()
 	$postids = $_POST["coblo_post_ids"];
 
 	$addresses = array();
-	foreach ($postids as $postid) {
+	foreach ($postids as $postid)
+	{
 		$cookie = $_COOKIE['coblo-id-' . $postid];
 		$addresses = array_merge($addresses, $wpdb->get_col('
 		SELECT address
@@ -62,7 +64,8 @@ function replace_content($content_obj)
 	global $wpdb;
 	$tablename = $wpdb->prefix . 'articlepayments';
 	$postid = get_the_ID();
-	if (is_home()) {
+	if (is_home())
+	{
 		$page_for_posts = get_option('page_for_posts');
 		$postid = get_post($page_for_posts)->ID;
 	}
@@ -100,7 +103,7 @@ function replace_content($content_obj)
 				return $text;
 			} else if ($article_paid["is_paid"])
 			{
-				$cookie_link = plugins_url('/coblo-set-cookie.php?cookie=' . $cookie, __FILE__);
+				$cookie_link = home_url() . '?coblo_post_id=' . $postid . '&coblo_cookie=' . $cookie;
 				$cookie_text = '<p>Save this link:<br><a href="' . $cookie_link . '">' . $cookie_link . '</a>';
 				$cookie_text .= '<br>So you can get your identifier cookie back if you loose it.</p>';
 				return $cookie_text . $content_obj;
@@ -134,9 +137,11 @@ function replace_content($content_obj)
 	return $text;
 }
 
-function get_text($technical_problems, $postid=null, $address=null) {
+function get_text($technical_problems, $postid = null, $address = null)
+{
 	$text = "";
-	if ($postid && strpos(get_post($postid)->post_content,'<!--more-->')) {
+	if ($postid && strpos(get_post($postid)->post_content, '<!--more-->'))
+	{
 		$text .= explode('<!--more-->', get_post($postid)->post_content)[0];
 		$text .= " ...";
 	}
@@ -147,7 +152,8 @@ function get_text($technical_problems, $postid=null, $address=null) {
 			<h3>Technical Problems</h3>
 			<p>There was an error! Please try again in some minutes.</p>
 		";
-	} else {
+	} else
+	{
 		$text .= '
 			<h3>You have to pay to read this article</h3>
 			<p>Please send ' . get_option('coblo_amount') . " CHM to " . $address . '</p>
@@ -166,7 +172,12 @@ function article_is_paid($address)
 {
 	$has_error = false;
 	$is_paid = false;
-	$postfields = array("jsonrpc" => "1.0", "id" => "curltest", "method" => "listaddresstransactions", "params" => [$address, 1000000]);
+	$postfields = array(
+		"jsonrpc" => "1.0",
+		"id" => "curltest",
+		"method" => "listaddresstransactions",
+		"params" => [$address, 1000000]
+	);
 
 	$answer = curl_post('http://' . get_option('coblo_host') . ':' . get_option('coblo_port'), json_encode($postfields), array(
 		'username' => get_option('coblo_user'),
@@ -206,12 +217,21 @@ function create_address()
 
 function set_cookies()
 {
-	foreach ($_POST['coblo_posts_need_cookie'] as $postid) {
+	foreach ($_POST['coblo_posts_need_cookie'] as $postid)
+	{
 		if (!array_key_exists('coblo-id-' . $postid, $_COOKIE))
 		{
 			$cookie = randomName(32);
 			setcookie('coblo-id-' . $postid, $cookie, time() + 60 * 60 * 24 * 30, "/", "");
 		}
+	}
+}
+
+function get_cookie_back()
+{
+	if ($_GET['coblo_post_id'] && $_GET['coblo_cookie'])
+	{
+		setcookie('coblo-id-' . $_GET['coblo_post_id'], $_GET['coblo_cookie'], time() + 60 * 60 * 24 * 30, "/", "");
 	}
 }
 

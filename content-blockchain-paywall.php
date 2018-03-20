@@ -104,8 +104,13 @@ function replace_content($content_obj)
 			} else if ($article_paid["is_paid"])
 			{
 				$cookie_link = home_url() . '?coblo_post_id=' . $postid . '&coblo_cookie=' . $cookie;
-				$cookie_text = '<p>Save this link:<br><a href="' . $cookie_link . '">' . $cookie_link . '</a>';
-				$cookie_text .= '<br>So you can read this article from other devices.</p>';
+				$cookie_text = '
+					<p>
+						Save this link:<br>
+						<a class="coblo-cookie-link" href="' . $cookie_link . '">' . $cookie_link . '</a><br>
+						So you can read this article from other devices.
+					</p>
+				';
 				return $cookie_text . $content_obj;
 			}
 		}

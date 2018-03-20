@@ -7,3 +7,7 @@ div.content-blockchain-post {
 div.content-blockchain-post p {
 	margin-bottom: 0;
 }
+
+a.coblo-cookie-link {
+	font-size: .85rem;
+}

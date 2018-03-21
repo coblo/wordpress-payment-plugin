@@ -4,7 +4,7 @@ Plugin Name: Content Blockchain Paywall
 Plugin URI: content-blockchain.org
 Description: Adds a paywall to all posts. Users will have to pay on the content blockchain to read your articles.
 Version: 1.0
-Author: Patricia Schinke
+Author: Content-Blockchain
 Author URI: content-blockchain.org
 License: GPLv3
 */

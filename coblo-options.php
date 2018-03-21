@@ -6,7 +6,7 @@ function coblo_create_menu()
 {
 	add_menu_page(
 		'Content Blockchain Paywall Settings',
-		'Content Blockchain Paywall Settings',
+		'CoBlo Settings',
 		'administrator',
 		__FILE__,
 		'coblo_settings_page'

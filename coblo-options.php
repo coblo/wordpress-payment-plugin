@@ -123,7 +123,7 @@ function coblo_settings_page()
 				</tr>
 				<tr valign="top">
 					<th scope="row" style="padding: 15px 10px 15px 0; width: 150px;"><label for="coblo_paywall_header">Paywall
-							Header</label></th>
+							header</label></th>
 					<td style="padding: 10px 10px;">
 						<input type="text" id="coblo_paywall_header" name="coblo_paywall_header"
 						       placeholder="Thank you for the interest in our article"
